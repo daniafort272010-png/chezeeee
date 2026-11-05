@@ -187,7 +187,7 @@ namespace predict {
     }
 }
 void GetBulletTPTarget() {
-    if (!setting::misc::bullet_tp) {
+    if (!setting::misc::bullet_tp || !entity_data::local_player) {
         bullets_target_info.bullet_target_player = nullptr;
         bullets_target_info.bullet_target_transform = nullptr;
         return;
@@ -234,6 +234,18 @@ void hooks::methods::ClientInput_hk(SDK::BasePlayer* local_player, uintptr_t sta
         entity_data::local_player = SDK::LocalPlayer::GetEntity();
         Get::entity_loop();
 
+        // Clear cached outputs even if initialization or movement checks return early.
+        current_manipulate_angle = { 0, 0, 0 };
+        manipulator_scan_points.clear();
+        manipulator_draw_points.clear();
+        if (!entity_data::local_player || !setting::combat::enable_manipulated || !is_active(setting::combat::manipulated_key))
+            manipulator_locked_target = nullptr;
+        bullets_target_info.bullet_target_player = nullptr;
+        bullets_target_info.bullet_target_transform = nullptr;
+        target_info.has_target = false;
+        target_info.target_player = nullptr;
+        target_info.target_transform = nullptr;
+
         if (entity_data::local_player) {
             reset(false);
 
@@ -259,12 +271,12 @@ void hooks::methods::ClientInput_hk(SDK::BasePlayer* local_player, uintptr_t sta
                 chams::tick();
             }
 
+            // Prediction must use this frame's eye offset, not the previous frame's.
+            find_manipulate_angle();
             if (setting::combat::aim_enable) {
                 predict::GetAimAnglesAndPredict();
             }
-            if (setting::misc::bullet_tp) {
-                GetBulletTPTarget();
-            }
+            GetBulletTPTarget();
 
             if (setting::movement::no_mini_sprint) {
                 entity_data::local_player->add_modelstate_flag(SDK::ModelState::Flags::Sprinting);
@@ -350,9 +362,6 @@ void hooks::methods::ClientInput_hk(SDK::BasePlayer* local_player, uintptr_t sta
                 walk_movement->groundAngleNew() = 0.0f;
             }
 
-            if (setting::combat::enable_manipulated && is_active(setting::combat::manipulated_key)) {
-                find_manipulate_angle();
-            }
             if (setting::movement::enable_airStack && is_active(setting::movement::airStack_key)) {
                 walk_movement->gravityMultiplier() = 0.0f;
                 walk_movement->gravityMultiplierSwimming() = -4.0f;

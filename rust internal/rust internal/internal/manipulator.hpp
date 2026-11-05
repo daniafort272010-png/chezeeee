@@ -2,9 +2,9 @@
 #include "Getter.hpp"
 #include "server_side.hpp"
 #include "Hooks.hpp"
-#include "manipulator.hpp"
 #include <vector>
 #include <cmath>
+#include <limits>
 #include <imgui.h>
 
 inline Vector3 current_manipulate_angle = { 0, 0, 0 };
@@ -19,6 +19,13 @@ struct ScanPoint {
 
 inline std::vector<ScanPoint> manipulator_scan_points;
 inline std::vector<ScanPoint> manipulator_draw_points;
+
+inline void reset_manipulator_state() {
+    current_manipulate_angle = { 0, 0, 0 };
+    manipulator_locked_target = nullptr;
+    manipulator_scan_points.clear();
+    manipulator_draw_points.clear();
+}
 
 inline float manip_get_eye_height() {
     Vector3 eyeOff = SDK::PlayerEyes::EyeOffset();
@@ -48,14 +55,19 @@ inline SDK::BasePlayer* manip_find_best_target() {
     matrix4x4 v_matrix = Get::view_matrix();
     if (!v_matrix.matrix) return nullptr;
 
-    float max_angle = setting::combat::total_points;
-    if (max_angle <= 0.0f) max_angle = 1.0f;
+    const float width = static_cast<float>(SDK::UnityEngine::Screen::GetWidth());
+    const float height = static_cast<float>(SDK::UnityEngine::Screen::GetHeight());
+    if (!std::isfinite(width) || !std::isfinite(height) || width <= 0.f || height <= 0.f)
+        return nullptr;
 
+    const Vector2 center{ width * 0.5f, height * 0.5f };
+    float best_distance_squared = (std::numeric_limits<float>::max)();
     SDK::BasePlayer* best = nullptr;
 
     for (const auto& player : entity_data::players_list) {
         auto* player_pawn = (SDK::BasePlayer*)(player.pawn);
-        if (!player_pawn) continue;
+        if (!player_pawn || player_pawn == entity_data::local_player) continue;
+        if (player_pawn->lifeState() == LifeState::Dead || player_pawn->health() <= 0.f) continue;
 
         if (setting::combat::ignore_team_combat_type && Get::team(player_pawn, entity_data::local_player)) continue;
         if (setting::combat::ignore_npc_combat_type && player.is_npc) continue;
@@ -70,7 +82,13 @@ inline SDK::BasePlayer* manip_find_best_target() {
         Vector2 screen_pos{};
         if (!head.world_to_screen(screen_pos, v_matrix.matrix)) continue;
 
-        best = player_pawn;
+        const float dx = screen_pos.x - center.x;
+        const float dy = screen_pos.y - center.y;
+        const float distance_squared = dx * dx + dy * dy;
+        if (std::isfinite(distance_squared) && distance_squared < best_distance_squared) {
+            best_distance_squared = distance_squared;
+            best = player_pawn;
+        }
     }
 
     return best;
@@ -78,13 +96,12 @@ inline SDK::BasePlayer* manip_find_best_target() {
 
 inline void find_manipulate_angle() {
     if (!setting::combat::enable_manipulated || !is_active(setting::combat::manipulated_key)) {
-        current_manipulate_angle = { 0, 0, 0 };
-        manipulator_scan_points.clear();
-        manipulator_draw_points.clear();
+        reset_manipulator_state();
         return;
     }
 
     manipulator_scan_points.clear();
+    current_manipulate_angle = { 0, 0, 0 };
 
     if (!entity_data::local_player || !entity_data::local_player->GetTransform() || !entity_data::local_player->eyes()) {
         current_manipulate_angle = { 0, 0, 0 };
@@ -92,6 +109,8 @@ inline void find_manipulate_angle() {
         return;
     }
 
+    if (manipulator_locked_target && !manip_is_target_alive(manipulator_locked_target))
+        manipulator_locked_target = nullptr;
     SDK::BasePlayer* target_player = manipulator_locked_target ? manipulator_locked_target : manip_find_best_target();
     if (!target_player) {
         current_manipulate_angle = { 0, 0, 0 };

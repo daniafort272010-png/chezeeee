@@ -94,5 +94,5 @@ namespace AntiHackProtection {
 	static int debuglevel = 1;
 }
 
-bool check_hit(Vector3 HitPositionWorld, SDK::Projectile* projectile);
+bool check_hit(Vector3 HitPositionWorld, SDK::Projectile* projectile, SDK::BasePlayer* target = nullptr);
 bool check_eye(Vector3 eyePos);

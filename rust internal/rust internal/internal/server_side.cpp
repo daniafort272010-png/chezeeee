@@ -2,15 +2,14 @@
 #include "Hooks.hpp"
 #include <algorithm>
 
-bool check_hit(Vector3 HitPositionWorld, SDK::Projectile* projectile) {
-    if (!projectile || !target_info.has_target || !target_info.target_player) return false;
+bool check_hit(Vector3 HitPositionWorld, SDK::Projectile* projectile, SDK::BasePlayer* target) {
+    if (!projectile || !entity_data::local_player) return false;
+    SDK::BasePlayer* target_ply = target ? target : (target_info.has_target ? target_info.target_player : nullptr);
+    if (!target_ply) return false;
 
     if (projectile->integrity() <= 0.f) {
         return false;
     }
-
-    SDK::BasePlayer* target_ply = target_info.target_player;
-    if (!target_ply) return false;
 
     float timeSinceLastTick = (SDK::UnityEngine::Time::GetRealtimeSinceStartup() - entity_data::local_player->lastSentTickTime());
     float last_tick_time = (std::max)(0.f, (std::min)(timeSinceLastTick, 1.f));
@@ -52,6 +51,7 @@ bool check_hit(Vector3 HitPositionWorld, SDK::Projectile* projectile) {
 }
 
 bool check_eye(Vector3 eyePos) {
+    if (!entity_data::local_player || !entity_data::local_player->eyes()) return false;
     float timeSinceLastTick = (SDK::UnityEngine::Time::GetRealtimeSinceStartup() - entity_data::local_player->lastSentTickTime());
     float last_tick_time = (std::max)(0.f, (std::min)(timeSinceLastTick, 1.f));
     bool hit = true;

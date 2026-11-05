@@ -1,11 +1,15 @@
 #include "Hooks.hpp"
+#include <cmath>
 
 void hooks::methods::DoMovement_hk(SDK::Projectile* projectile, float deltaTime) {
     if (!projectile) {
         return;
     }
 
-    if (projectile->owner() == entity_data::local_player) {
+    if (!std::isfinite(deltaTime) || deltaTime <= 0.f)
+        return projectile->DoMovement(deltaTime);
+
+    if (entity_data::local_player && projectile->owner() == entity_data::local_player) {
         auto currentVelocity = projectile->currentVelocity() * deltaTime;
         auto intmag = currentVelocity.Magnitude();
 
@@ -23,7 +27,7 @@ void hooks::methods::DoMovement_hk(SDK::Projectile* projectile, float deltaTime)
                     if (playerTransform && hitTest) {
                         Vector3 playerPos = playerTransform->GetPosition();
                         Vector3 bulletPos = projectile->currentPosition();
-                        Vector3 nextBulletPos = projectile->currentPosition() + (projectile->currentVelocity() * SDK::UnityEngine::Time::GetFixedDeltaTime());
+                        Vector3 nextBulletPos = projectile->currentPosition() + (projectile->currentVelocity() * deltaTime);
 
                         SDK::Line updateLine = SDK::Line(bulletPos, nextBulletPos);
                         Vector3 closestUpdateToPlayer = updateLine.ClosestPoint(playerPos);
@@ -56,19 +60,19 @@ void hooks::methods::DoMovement_hk(SDK::Projectile* projectile, float deltaTime)
                                 SDK::ProtoBuf::PlayerProjectileUpdate* ppu = SDK::ProtoBuf::PlayerProjectileUpdate::New();
                                 if (ppu && hitTest && playerTransform && projectileTarget) {
                                     if (projectile->projectileID() != 0) {
-                                        Vector3 velocityPerTick = projectile->currentVelocity() * SDK::UnityEngine::Time::GetFixedDeltaTime();
+                                        Vector3 velocityPerTick = projectile->currentVelocity() * deltaTime;
                                         float velocityPerTickSpeed = velocityPerTick.Length();
 
                                         if (velocityPerTickSpeed > 0.0001f) {
                                             float speedPerSecond = 1.f / velocityPerTickSpeed;
                                             float distanceTraveled = (closestUpdateToPlayer - bulletPos).Length();
-                                            float traveledTime = distanceTraveled * speedPerSecond * SDK::UnityEngine::Time::GetFixedDeltaTime();
+                                            float traveledTime = distanceTraveled * speedPerSecond * deltaTime;
 
                                             projectile->traveledDistance() += distanceTraveled;
                                             projectile->traveledTime() += traveledTime;
 
                                             ppu->projectileId() = projectile->projectileID();
-                                            ppu->travelTime() = projectile->traveledTime() + traveledTime;
+                                            ppu->travelTime() = projectile->traveledTime();
                                             ppu->curVelocity() = projectile->currentVelocity();
                                             ppu->curPosition() = closestUpdateToPlayer;
 
@@ -90,7 +94,7 @@ void hooks::methods::DoMovement_hk(SDK::Projectile* projectile, float deltaTime)
                                                 hitTest->HitMaterial() = matStr;
                                             }
 
-                                            if (check_hit(newBulletPosx2, projectile)) {
+                                            if (check_hit(newBulletPosx2, projectile, projectileTarget)) {
                                                 projectile->DoHit(hitTest, newBulletPosx2, Vector3());
                                             }
                                         }
@@ -103,7 +107,7 @@ void hooks::methods::DoMovement_hk(SDK::Projectile* projectile, float deltaTime)
             }
 
             Vector3 bulletPos = projectile->currentPosition();
-            Vector3 nextBulletPos = projectile->currentPosition() + (projectile->currentVelocity() * SDK::UnityEngine::Time::GetFixedDeltaTime());
+            Vector3 nextBulletPos = projectile->currentPosition() + (projectile->currentVelocity() * deltaTime);
         }
     }
 
