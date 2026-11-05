@@ -595,8 +595,6 @@ void Visuals() {
 
 HRESULT hooks::methods::hkPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT Flags) {
     if (!oPresent) return S_OK;
-    ImGuiIO& io = ImGui::GetIO();
-
     if (GetAsyncKeyState(VK_HOME) & 1 || GetAsyncKeyState(VK_INSERT) & 1) {
         setting::menu::render_menu = !setting::menu::render_menu;
     }
@@ -622,6 +620,14 @@ HRESULT hooks::methods::hkPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval,
         }
     }
 
+    if (!imgui_init || !ImGui::GetCurrentContext())
+        return oPresent(pSwapChain, SyncInterval, Flags);
+
+    ImGuiIO& io = ImGui::GetIO();
+    io.MouseDrawCursor = setting::menu::render_menu;
+    if (setting::menu::render_menu)
+        ClipCursor(NULL);
+
     ImGui_ImplDX11_NewFrame();
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
@@ -634,11 +640,7 @@ HRESULT hooks::methods::hkPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval,
         if (setting::menu::render_menu) {
             ClipCursor(NULL);
 
-            POINT m_pos;
-            GetCursorPos(&m_pos);
-            ScreenToClient(window, &m_pos);
-            io.MousePos.x = (float)m_pos.x;
-            io.MousePos.y = (float)m_pos.y;
+            // The Win32 backend supplies mouse coordinates before NewFrame().
 
             GUI::get().draw();
         }

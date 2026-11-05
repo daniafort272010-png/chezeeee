@@ -195,7 +195,7 @@ void CompBuilder::Empty( const char* label, ImRect total_bb, ImRect bb, std::fun
 	auto id = window->GetID( label );
 	
 	ItemSize( total_bb );
-	ItemAdd( total_bb, id );
+	if (!ItemAdd( total_bb, id )) return;
 
 	bool hovered, held;
 	bool pressed = ButtonBehavior( bb, id, &hovered, &held );
@@ -211,7 +211,7 @@ void CompBuilder::Empty( const char* label, ImRect total_bb, ImRect bb, std::fun
 
 bool CompBuilder::Button( const char* label, ImVec2 size, std::function< void( const ButtonEnv& ) > code ) {
 	ImRect bb{ GetCurrentWindow( )->DC.CursorPos, GetCurrentWindow( )->DC.CursorPos + CalcItemSize( size, CalcItemWidth( ), GetFrameHeight( ) ) };
-	bool pressed;
+	bool pressed = false;
 
 	Empty( label, bb, bb, [&]( const EmptyEnv& env ) {
 		struct s {
@@ -578,7 +578,6 @@ bool CompBuilder::Binder( const char* label, int* key, std::function< void( cons
 		const bool SHOULD_EDIT = env.hovered && GetIO( ).MouseClicked[0] && !obj.is_active;
 
 		if ( SHOULD_EDIT ) {
-			memset( GetIO( ).MouseDown, 0, sizeof( GetIO( ).MouseDown ) );
 			*key = 58;
 
 			obj.is_active = true;
@@ -587,7 +586,7 @@ bool CompBuilder::Binder( const char* label, int* key, std::function< void( cons
 		bool value_changed = false;
 		int k = *key;
 
-		if ( obj.is_active ) {
+		if ( obj.is_active && !SHOULD_EDIT ) {
 			for ( auto i = 0; i < 5; i++ ) {
 				if ( GetIO( ).MouseDown[i] ) {
 					switch ( i ) {
@@ -650,7 +649,7 @@ bool CompBuilder::Binder( const char* label, int* key, std::function< void( cons
 
 bool CompBuilder::OpenButton( const char* str_id, ImVec2 size, std::function< void( OpenButtonEnv ) > code ) {
 	ImRect bb{ GetCurrentWindow( )->DC.CursorPos, GetCurrentWindow( )->DC.CursorPos + size };
-	bool pressed;
+	bool pressed = false;
 
 	Empty( str_id, bb, bb, [&]( const EmptyEnv& env ) {
 		struct s {
