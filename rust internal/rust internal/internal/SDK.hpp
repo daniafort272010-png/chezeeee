@@ -236,7 +236,7 @@ namespace SDK {
         FIELD(HitDistance, "HitDistance", float);
         FIELD(HitPart, "HitPart", uint32_t);
         FIELD(AttackRay, "AttackRay", UnityEngine::Ray);
-        FIELD(DamageProperties, "DamageProperties", void*);
+        FIELD(DamageProperties, "damageProperties", void*);
         FIELD(HitPartName, "HitPartName", System::String*);
         FIELD(GameMaterial, "gameMaterial", void*);
         FIELD(Collider, "collider", void*);
@@ -621,11 +621,12 @@ namespace SDK {
     class PlayerEyes {
     public:
         CLASS("", "PlayerEyes");
-        FIELD(bodyRotation, "bodyRotation", UnityEngine::Quaternion);
-        FIELD(headAngles, "headAngles", Vector3);
-        FIELD(position, "position", Vector3);
+        // Auto-properties have backing fields; position and rotation are computed.
+        FIELD(bodyRotation, "<bodyRotation>k__BackingField", UnityEngine::Quaternion);
+        FIELD(headAngles, "<headAngles>k__BackingField", Vector3);
+        METHOD(position, "get_position", Vector3);
         FIELD(viewOffset, "viewOffset", Vector3);
-        FIELD(rotation, "rotation", UnityEngine::Quaternion);
+        METHOD(rotation, "get_rotation", UnityEngine::Quaternion);
 
         STATIC_FIELD(EyeOffset, "EyeOffset", Vector3);
         METHOD(MovementForward, "MovementForward", Vector3);
@@ -758,7 +759,6 @@ namespace SDK {
         FIELD(gravityModifier, "gravityModifier", float);
         FIELD(projectileID, "projectileID", int);
         FIELD(hitTest, "hitTest", HitTest*);
-        FIELD(hitInfo, "hitInfo", HitInfo*);
         FIELD(drag, "drag", float);
         FIELD(owner, "owner", BasePlayer*);
         FIELD(thickness, "thickness", float);
@@ -899,6 +899,7 @@ namespace SDK {
         CLASS("", "BaseMovement");
         FIELD(TargetMovement, "<TargetMovement>k__BackingField", Vector3);
         FIELD(Running, "<Running>k__BackingField", float);
+        FIELD(Ducking, "<Ducking>k__BackingField", float);
 
         void Jump(ModelState* state) {
             if (!this) return;
@@ -933,10 +934,9 @@ namespace SDK {
         FIELD(maxAngleWalking, "maxAngleWalking", float);
         FIELD(maxAngleClimbing, "maxAngleClimbing", float);
 
-        FIELD(Grounded, "Grounded", bool);
+        FIELD(Grounded, "grounded", bool);
         FIELD(flying, "flying", bool);
         FIELD(swimming, "swimming", bool);
-        FIELD(Ducking, "Ducking", float);
         FIELD(climbing, "climbing", bool);
         FIELD(sliding, "sliding", bool);
         FIELD(jumping, "jumping", bool);
@@ -944,7 +944,7 @@ namespace SDK {
         FIELD(landTime, "landTime", float);
         FIELD(groundTime, "groundTime", float);
 
-        FIELD(velocity, "Velocity", Vector3);
+        METHOD(velocity, "CurrentVelocity", Vector3);
         FIELD(capsule, "capsule", CapsuleCollider*);
 
         void TeleportTo(Vector3 pos) {

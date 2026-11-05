@@ -9,15 +9,6 @@ void hooks::methods::ProjectileUpdate_hk(SDK::Projectile* projectile) {
         if (entity_data::local_player) {
             if (projectile->owner() != entity_data::local_player) return;
 
-            SDK::BasePlayer* best_target = nullptr;
-            Vector3 best_hit_pos = { 0,0,0 };
-
-            Vector3 projectile_pos = projectile->currentPosition();
-            Vector3 projectile_vel = projectile->currentVelocity();
-
-            SDK::HitTest* hitTest = projectile->hitTest();
-            SDK::HitInfo* hitInfo = projectile->hitInfo();
-
             if (setting::combat::aim_enable) {
                 if (projectile->traveledTime() <= 0.4f) {
                     Vector3 velocity = projectile->currentVelocity();

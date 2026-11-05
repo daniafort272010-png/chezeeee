@@ -30,7 +30,7 @@ static Dissector::IL2CPP::IL2CPPClass* TypeClass() { \
 #define FIELD(fieldName, fieldPathName, fieldType) \
 fieldType& fieldName() { \
 	static auto fieldOff = (uintptr_t)Dissector::FindField(TypeClass(), fieldPathName); \
-	return *reinterpret_cast<fieldType*>(this + fieldOff); \
+	return *reinterpret_cast<fieldType*>(reinterpret_cast<uintptr_t>(this) + fieldOff); \
 }
 
 #define STATIC_FIELD(fieldName, fieldPathName, fieldType) \
