@@ -192,7 +192,7 @@ namespace ui {
         float h_off = (box_width - (h1w + ImGui::CalcTextSize(LangManager::get().translate(" List")).x)) * 0.5f;
 
         d->AddText({ p.x + h_off, p.y + (header_h - ImGui::GetTextLineHeight()) * 0.5f + 1.0f },
-            ImGui::GetColorU32(style.Colors[ImGuiCol_ButtonActive]), LangManager::get().translate("Bind"));
+            ImGui::GetColorU32(style.Colors[ImGuiCol_Scheme]), LangManager::get().translate("Bind"));
         d->AddText({ p.x + h_off + h1w, p.y + (header_h - ImGui::GetTextLineHeight()) * 0.5f + 1.0f },
             ImGui::GetColorU32(ImGuiCol_Text), LangManager::get().translate(" List"));
 
@@ -207,7 +207,7 @@ namespace ui {
             d->AddText({ rx, row_y }, ImGui::GetColorU32(style.Colors[ImGuiCol_Text]), b.name.c_str());
             rx += col_name_w + sep_w;
 
-            d->AddText({ rx, row_y }, ImGui::GetColorU32(style.Colors[ImGuiCol_ButtonActive]), b.key_tag.c_str());
+            d->AddText({ rx, row_y }, ImGui::GetColorU32(style.Colors[ImGuiCol_Scheme]), b.key_tag.c_str());
 
             row_y += row_h + row_pad;
         }
@@ -226,7 +226,7 @@ namespace ui {
             setting::menu::watermark_pos = ImGui::GetWindowPos();
             ImDrawList* d = ImGui::GetWindowDrawList();
 
-            const char* t1 = "Ghost";
+            const char* t1 = "Israel";
             const char* t2 = " Client";
             char fps_text[32];
             snprintf(fps_text, sizeof(fps_text), " | %.0f FPS", ImGui::GetIO().Framerate);
@@ -234,7 +234,7 @@ namespace ui {
             ImGuiStyle& style = ImGui::GetStyle();
             ImU32 bg_col = ImGui::GetColorU32(style.Colors[ImGuiCol_ChildBg]);
             ImU32 border_col = ImGui::GetColorU32(style.Colors[ImGuiCol_Border]);
-            ImU32 accent_col = ImGui::GetColorU32(style.Colors[ImGuiCol_ButtonActive]);
+            ImU32 accent_col = ImGui::GetColorU32(style.Colors[ImGuiCol_Scheme]);
             ImU32 text_col = ImGui::GetColorU32(style.Colors[ImGuiCol_Text]);
             ImU32 text_muted = ImGui::GetColorU32(style.Colors[ImGuiCol_TextDisabled]);
             float rounding = style.ChildRounding;
@@ -271,7 +271,8 @@ namespace ui {
 }
 
 namespace intro {
-    inline bool intro_active = true;
+    // Cosmetic startup panel disabled; hook initialization remains unchanged.
+    inline bool intro_active = false;
     inline float intro_start = 0.0f;
 
     struct HookLogEntry {
