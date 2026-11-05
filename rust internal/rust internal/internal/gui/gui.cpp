@@ -80,7 +80,7 @@ void GUI::initialize(ID3D11Device* device) {
 	if (initialized)
 		return;
 
-	size = ImVec2{ 750, 500 };
+	size = ImVec2{ 820, 560 };
 
 	GImGui->IO.IniFilename = "";
 
@@ -414,7 +414,7 @@ void GUI::initialize(ID3D11Device* device) {
 					else strncpy_s(display_path, setting::visuals::custommodel::path, _TRUNCATE);
 
 					if (display_path[0]) {
-						TextDisabled(display_path);
+						TextDisabled("%s", display_path);
 					}
 
 					if (widgets.Button(LangManager::get().translate("Load"))) {
@@ -422,7 +422,7 @@ void GUI::initialize(ID3D11Device* device) {
 					}
 
 					if (setting::visuals::custommodel::status) {
-						TextDisabled(setting::visuals::custommodel::status);
+						TextDisabled("%s", setting::visuals::custommodel::status);
 					}
 
 					widgets.Checkbox(LangManager::get().translate("Rainbow"), &setting::visuals::custommodel::rainbow::enabled);
@@ -550,6 +550,7 @@ void GUI::initialize(ID3D11Device* device) {
 		static int cfg = 0;
 		static char cfg_name[64] = "default";
 		static std::vector<std::string> configs = list_configs();
+						cfg = configs.empty() ? 0 : std::clamp(cfg, 0, static_cast<int>(configs.size()) - 1);
 
 		BeginGroup();
 		{
@@ -572,6 +573,7 @@ void GUI::initialize(ID3D11Device* device) {
 					else {
 						setting::config::save(cfg_name);
 						configs = list_configs();
+						cfg = configs.empty() ? 0 : std::clamp(cfg, 0, static_cast<int>(configs.size()) - 1);
 						NotifyManager::get().add(LangManager::get().translate("Config saved"), NotifyManager::notify_success);
 					}
 				}
@@ -622,7 +624,7 @@ void GUI::initialize(ID3D11Device* device) {
 
 				TextDisabled(LangManager::get().translate("Name:"));
 				SameLine(GetWindowWidth() - CalcTextSize(selected_name).x - GImGui->Style.WindowPadding.x);
-				Text(selected_name);
+				TextUnformatted(selected_name);
 
 				widgets.Separator();
 
@@ -634,6 +636,7 @@ void GUI::initialize(ID3D11Device* device) {
 						std::string target_name = configs.empty() ? cfg_name : configs[cfg];
 						setting::config::save(target_name);
 						configs = list_configs();
+						cfg = configs.empty() ? 0 : std::clamp(cfg, 0, static_cast<int>(configs.size()) - 1);
 						NotifyManager::get().add(LangManager::get().translate("Config saved"), NotifyManager::notify_success);
 					}
 				}
@@ -664,6 +667,7 @@ void GUI::initialize(ID3D11Device* device) {
 					else {
 						std::filesystem::remove(setting::config::get_path(configs[cfg]));
 						configs = list_configs();
+						cfg = configs.empty() ? 0 : std::clamp(cfg, 0, static_cast<int>(configs.size()) - 1);
 						cfg = 0;
 						if (!configs.empty())
 							strncpy_s(cfg_name, configs[0].c_str(), _TRUNCATE);
@@ -676,6 +680,7 @@ void GUI::initialize(ID3D11Device* device) {
 
 				if (widgets.Button(LangManager::get().translate("Refresh list"))) {
 					configs = list_configs();
+						cfg = configs.empty() ? 0 : std::clamp(cfg, 0, static_cast<int>(configs.size()) - 1);
 					NotifyManager::get().add(LangManager::get().translate("List refreshed"), NotifyManager::notify_info);
 				}
 
@@ -699,7 +704,18 @@ void GUI::draw() {
 	Begin("GUI", 0, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBringToFrontOnFocus); {
 		BeginChild("navbar", { 180, 0 }, 0, ImGuiWindowFlags_NoBackground);
 		{
-			SetCursorPos({ 14, 14 });
+			// Vector emblem: no image downloads or extra font glyphs required.
+			auto* brand = GetWindowDrawList();
+			const ImVec2 origin = GetWindowPos();
+			const ImU32 blue = GetColorU32(ImGuiCol_Scheme);
+			brand->AddRectFilled(origin + ImVec2{ 14, 12 }, origin + ImVec2{ 166, 15 }, blue);
+			brand->AddRectFilled(origin + ImVec2{ 14, 70 }, origin + ImVec2{ 166, 73 }, blue);
+			const ImVec2 center = origin + ImVec2{ 35, 43 };
+			brand->AddTriangle(center + ImVec2{ 0, -17 }, center + ImVec2{ 14.722f, 8.5f }, center + ImVec2{ -14.722f, 8.5f }, blue, 2.0f);
+			brand->AddTriangle(center + ImVec2{ 0, 17 }, center + ImVec2{ -14.722f, -8.5f }, center + ImVec2{ 14.722f, -8.5f }, blue, 2.0f);
+			brand->AddText(origin + ImVec2{ 60, 28 }, blue, "ISRAEL");
+			brand->AddText(origin + ImVec2{ 60, 47 }, GetColorU32(ImGuiCol_TextDisabled), "BLUE / WHITE");
+			SetCursorPos({ 14, 88 });
 			PushStyleColor(ImGuiCol_FrameBg, GetColorU32(ImGuiCol_FrameBg, 0.f));
 			PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1);
 			PushItemFlag(ImGuiItemFlags_NoNav, true);
@@ -721,9 +737,7 @@ void GUI::draw() {
 				GetWindowDrawList()->AddText(fonts[icons].get(12), 12, { env.bb.Min.x + 6, env.bb.GetCenter().y - 6 }, GetColorU32(ImGuiCol_Scheme), i_translate_02);
 				GetWindowDrawList()->AddText(fonts[font].get(12), 12, { env.bb.Min.x + 26, env.bb.GetCenter().y - 6 }, GetColorU32(ImGuiCol_Text), LangManager::get().get_lang_name());
 
-				if (env.pressed) {
-					env.open = !env.open;
-				}
+				// OpenButton already toggles the open state on click.
 
 				if (env.hovered) env.open = true;
 
